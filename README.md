@@ -1,125 +1,207 @@
-# Cognify / ExamCrush
+# Cognify
 
-Adaptive exam-prep web app built with Next.js.
+Cognify is an adaptive exam-prep web app built with **Next.js**. It helps students turn study materials into personalised revision sessions using a 3-phase quiz flow: baseline knowledge scan, weak-spot practice, and final challenge questions.
 
-The app lets a student upload study material, then runs a 3-phase revision session:
+The current version runs in **demo/development mode**, so the full app experience can be tested without using paid AI API credits.
 
-1. **Knowledge Scan** — broad questions to find baseline knowledge.
-2. **Weak Spot Drill** — targeted questions based on wrong or low-confidence answers.
-3. **Final Challenge** — harder synthesis questions to test overall mastery.
+## Features
 
-## Current development version
+* PDF and image upload interface
+* Built-in demo question engine
+* 3-phase adaptive revision flow
+* Weak-topic detection
+* Confidence scoring
+* Timed mode
+* Instant answer explanations
+* Topic mastery breakdown
+* Results summary
+* Session history
+* JSON export
+* API-ready structure for future OpenAI/Claude integration
 
-This version is designed so you can finish the app first without spending API credits.
+## Revision Flow
 
-By default:
+Cognify uses a 3-phase learning structure:
 
-```env
-DEMO_MODE=true
-NEXT_PUBLIC_DEMO_MODE=true
+1. **Knowledge Scan**
+   Broad questions across the study material to identify the student's baseline knowledge.
+
+2. **Weak Spot Drill**
+   Targeted questions based on wrong answers and low-confidence responses.
+
+3. **Final Challenge**
+   Harder synthesis questions designed to test overall understanding and exam readiness.
+
+## Tech Stack
+
+* **Framework:** Next.js
+* **Language:** TypeScript
+* **Styling:** CSS
+* **Runtime:** Node.js
+* **AI Integration:** OpenAI/Claude-ready backend route
+* **Current Mode:** Demo question engine
+
+## Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/your-username/cognify.git
+cd cognify
 ```
 
-That means the app uses a built-in demo question engine. You can test:
-
-- PDF/image upload UI
-- sample session button
-- 3-phase quiz flow
-- weak-topic detection
-- confidence scoring
-- timed mode
-- explanations and source hints
-- topic breakdown
-- results page
-- session history
-- JSON export
-
-The real OpenAI/Claude API path is still kept in the code for later.
-
-## Install
+### 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-## Environment setup
+### 3. Set up environment variables
 
-Create your local environment file:
+Create a local environment file:
 
 ```bash
 cp .env.example .env.local
 ```
 
-For now, keep this:
+For development, keep demo mode enabled:
 
 ```env
 DEMO_MODE=true
 NEXT_PUBLIC_DEMO_MODE=true
 ```
 
-## Run locally
+### 4. Run the development server
 
 ```bash
 npm run dev
 ```
 
-Open:
+Open the app in your browser:
 
 ```txt
 http://localhost:3000
 ```
 
-## How to test without API
+## Testing Without API Credits
 
-You have two options:
+Cognify currently supports full testing without OpenAI or Claude API usage.
 
-1. Click **Try sample session**.
-2. Upload any PDF/image and click **Start Cognify Session**.
+You can test the app in two ways:
 
-In demo mode, no OpenAI or Claude request is made.
+1. Click **Try sample session**
+2. Upload any PDF/image and start a session
 
-## Later API mode
+When demo mode is enabled, the app uses the built-in mock question engine instead of making external API requests.
 
-When the app is finished and you want real question generation, change `.env.local`:
+## Environment Variables
+
+| Variable                | Description                                           |
+| ----------------------- | ----------------------------------------------------- |
+| `DEMO_MODE`             | Enables or disables backend demo mode                 |
+| `NEXT_PUBLIC_DEMO_MODE` | Enables or disables frontend demo indicators          |
+| `AI_PROVIDER`           | Future AI provider option: `openai` or `anthropic`    |
+| `OPENAI_API_KEY`        | OpenAI API key for future real question generation    |
+| `OPENAI_MODEL`          | OpenAI model name                                     |
+| `ANTHROPIC_API_KEY`     | Anthropic API key for future real question generation |
+| `ANTHROPIC_MODEL`       | Anthropic model name                                  |
+
+## Future API Mode
+
+When the app is ready for real AI-generated questions, demo mode can be disabled:
 
 ```env
 DEMO_MODE=false
 NEXT_PUBLIC_DEMO_MODE=false
+
 AI_PROVIDER=openai
-OPENAI_API_KEY=your_key_here
-OPENAI_MODEL=gpt-5.4-mini
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=your_openai_model_here
 ```
 
-Or for Anthropic later:
+Or for Anthropic:
 
 ```env
 DEMO_MODE=false
 NEXT_PUBLIC_DEMO_MODE=false
+
 AI_PROVIDER=anthropic
-ANTHROPIC_API_KEY=your_key_here
-ANTHROPIC_MODEL=claude-haiku-4-5
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+ANTHROPIC_MODEL=your_anthropic_model_here
 ```
 
-Restart the dev server after changing `.env.local`.
+After changing `.env.local`, restart the development server.
 
-## Project structure
+## Project Structure
 
 ```txt
 app/
-  page.tsx                  Main UI and quiz flow
-  globals.css               Styling
-  api/questions/route.ts    Server route for demo/API question generation
+  page.tsx                  Main user interface and quiz flow
+  globals.css               Global styling
+  api/
+    questions/
+      route.ts              Backend route for demo/API question generation
+
 lib/
-  ai.ts                     OpenAI/Claude integration, disabled by demo mode
+  ai.ts                     OpenAI/Claude integration layer
   mock.ts                   Built-in development question engine
-  prompts.ts                AI prompts for later
-  schemas.ts                Question JSON validation
+  prompts.ts                Prompt templates for future AI mode
+  schemas.ts                Question validation schema
 ```
 
-## Next development ideas
+## Available Scripts
 
-- Add login/accounts.
-- Save sessions to Supabase/Postgres.
-- Add a review-only mode for weak topics.
-- Add short-answer questions.
-- Add a shareable PDF report.
-- Add real PDF text extraction before API mode to reduce cost.
+```bash
+npm run dev
+```
+
+Starts the local development server.
+
+```bash
+npm run build
+```
+
+Builds the app for production.
+
+```bash
+npm run start
+```
+
+Runs the production build locally.
+
+```bash
+npm run lint
+```
+
+Runs linting checks.
+
+## Roadmap
+
+* Add user authentication
+* Save sessions to a database
+* Add Supabase/PostgreSQL support
+* Add review-only mode for weak topics
+* Add short-answer questions
+* Add flashcard mode
+* Add shareable PDF reports
+* Add real PDF text extraction before API mode
+* Add cost-efficient AI question generation
+* Add deployment support
+
+## Security Notes
+
+Environment files such as `.env.local` should never be committed to GitHub.
+
+Make sure these files are included in `.gitignore`:
+
+```txt
+.env
+.env.local
+.env*.local
+node_modules
+.next
+```
+
+## Status
+
+Cognify is currently in active development. The app is fully testable in demo mode while the real AI question-generation pipeline is prepared for later integration.
