@@ -373,7 +373,7 @@ export default function Home() {
         <section className="hero">
           <div className="hero-kicker">Personalised exam prep</div>
           <h1>Study smarter<br />with <em>AI</em></h1>
-          <p>Upload your notes, slides, textbook PDF, or revision image. Cognify builds a 3-phase exam session that finds your weak spots and drills them.</p>
+          <p>Upload your notes, slides, textbook PDFs, or revision image. Cognify builds a 3-phase exam session that finds your weak spots and drills them.</p>
         </section>
 
         <section className="phase-cards">
