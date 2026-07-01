@@ -25,9 +25,11 @@ function topicSet(input: MockInput) {
   if (input.phase === 2 && input.weakTopics.length) {
     return input.weakTopics.map(cleanTopic).slice(0, 5);
   }
+
   if (input.phase === 3 && input.weakTopics.length) {
     return [...new Set([...input.weakTopics.map(cleanTopic), "Synthesis", "Exam Application"])].slice(0, 5);
   }
+
   return fallbackTopics.slice(0, 5);
 }
 
@@ -37,26 +39,23 @@ function fileLabel(fileName: string) {
   return name.length > 48 ? `${name.slice(0, 48)}…` : name;
 }
 
-function spreadCorrectOption(question: QuizQuestion, targetIndex: number): QuizQuestion {
-  const correctOption = question.options[question.correctIndex];
-  const wrongOptions = question.options.filter((_, index) => index !== question.correctIndex);
-
-  const options: string[] = [];
-  let wrongIndex = 0;
-
-  for (let i = 0; i < question.options.length; i++) {
-    if (i === targetIndex) {
-      options[i] = correctOption;
-    } else {
-      options[i] = wrongOptions[wrongIndex];
-      wrongIndex++;
-    }
-  }
-
+function q(
+  question: string,
+  options: string[],
+  correctIndex: number,
+  topic: string,
+  difficulty: QuizQuestion["difficulty"],
+  explanation: string,
+  sourceHint: string
+): QuizQuestion {
   return {
-    ...question,
+    question,
     options,
-    correctIndex: targetIndex,
+    correctIndex,
+    topic,
+    difficulty,
+    explanation,
+    sourceHint,
   };
 }
 
@@ -65,235 +64,233 @@ function makeQuestion(input: MockInput, idx: number, topic: string): QuizQuestio
   const sourceHint = `Development mode sample from ${material}; real page/section citations will be added when API mode is enabled.`;
 
   const phase1: QuizQuestion[] = [
-    {
-      question: `Which action best helps a student build a strong baseline understanding of ${topic} from ${material}?`,
-      options: [
-        "Identify the main idea, supporting details, and important terms before attempting harder questions",
-        "Memorise random sentences without checking how the ideas connect",
-        "Only read the conclusion and ignore the examples",
-        "Skip the topic until the final challenge",
+    q(
+      `What is the best first step when revising ${topic} from ${material}?`,
+      [
+        "Identify the main idea, key terms, and supporting points",
+        "Focus only on examples and ignore definitions",
+        "Read the final paragraph and skip the rest",
+        "Start with hard questions before reviewing basics",
       ],
-      correctIndex: 0,
+      0,
       topic,
-      difficulty: "easy",
-      explanation: "A baseline scan should check the main idea, key terms, and supporting details. That gives the learner a reliable starting point before targeted drilling.",
-      sourceHint,
-    },
-    {
-      question: `When reviewing ${topic}, what is the most useful sign that the learner may have a weak spot?`,
-      options: [
-        "They answer correctly but cannot explain why",
-        "They complete the question slowly but confidently",
-        "They remember an example from the notes",
-        "They can link the topic to another section",
+      "easy",
+      "A good baseline starts with the main idea, key terms, and supporting points before moving into harder practice.",
+      sourceHint
+    ),
+    q(
+      `Which response suggests the learner may have a weak spot in ${topic}?`,
+      [
+        "They can explain the answer clearly",
+        "They answer correctly but feel unsure why",
+        "They link the idea to another topic",
+        "They remember a relevant example",
       ],
-      correctIndex: 0,
+      1,
       topic,
-      difficulty: "medium",
-      explanation: "A correct answer with poor explanation can still indicate shallow understanding. Cognify treats wrong answers and low confidence as weak-spot signals.",
-      sourceHint,
-    },
-    {
-      question: `What should a good exam-prep question about ${topic} test first?`,
-      options: [
-        "Whether the learner understands the concept, not just whether they recognise keywords",
-        "Whether the learner can guess the longest option",
-        "Whether the learner has memorised page numbers only",
-        "Whether the learner can avoid all difficult questions",
+      "medium",
+      "A correct answer with low confidence can still reveal unstable understanding, so it should be treated as a weak-spot signal.",
+      sourceHint
+    ),
+    q(
+      `What should a good Knowledge Scan question about ${topic} test?`,
+      [
+        "Whether the learner remembers page numbers",
+        "Whether the learner can spot repeated words",
+        "Whether the learner understands the concept",
+        "Whether the learner can avoid difficult ideas",
       ],
-      correctIndex: 0,
+      2,
       topic,
-      difficulty: "easy",
-      explanation: "Good revision questions test understanding and application. Keyword recognition alone is not enough for proper exam readiness.",
-      sourceHint,
-    },
-    {
-      question: `If ${topic} appears in several parts of ${material}, what should the learner do?`,
-      options: [
-        "Compare how the idea is used across sections and note any repeated pattern",
-        "Treat every mention as unrelated",
-        "Only revise the first mention",
-        "Ignore repeated ideas because they are unlikely to matter",
+      "easy",
+      "A strong exam-prep question should test understanding, not only recognition of keywords or page details.",
+      sourceHint
+    ),
+    q(
+      `If ${topic} appears in different sections of ${material}, what should the learner do?`,
+      [
+        "Treat each mention as unrelated",
+        "Revise only the first mention",
+        "Ignore repeated ideas as less important",
+        "Compare the repeated patterns across sections",
       ],
-      correctIndex: 0,
+      3,
       topic,
-      difficulty: "medium",
-      explanation: "Repeated ideas usually show importance. Comparing sections helps the learner understand the concept more deeply and spot exam-relevant patterns.",
-      sourceHint,
-    },
-    {
-      question: `Which revision behaviour would Cognify most likely mark as a strength in ${topic}?`,
-      options: [
-        "Choosing the correct answer and rating confidence as high after understanding the explanation",
-        "Choosing randomly and moving on without reviewing",
-        "Avoiding the topic completely",
-        "Changing answers only because the option sounds technical",
+      "medium",
+      "Repeated patterns usually show importance. Comparing sections helps the learner understand how the idea is used.",
+      sourceHint
+    ),
+    q(
+      `Which behaviour would Cognify most likely treat as strong understanding of ${topic}?`,
+      [
+        "Choosing an answer because it sounds technical",
+        "Answering correctly with clear confidence",
+        "Guessing quickly and moving to the next topic",
+        "Avoiding the topic after one difficult question",
       ],
-      correctIndex: 0,
+      1,
       topic,
-      difficulty: "medium",
-      explanation: "High confidence is useful only when it comes with understanding. Cognify combines correctness and confidence to estimate mastery.",
-      sourceHint,
-    },
+      "medium",
+      "Correctness is strongest when it is supported by confidence and understanding, not guessing.",
+      sourceHint
+    ),
   ];
 
   const phase2: QuizQuestion[] = [
-    {
-      question: `You struggled with ${topic}. What is the best next step before attempting harder questions?`,
-      options: [
-        "Review the explanation, restate the idea in your own words, then answer a similar question",
-        "Skip straight to the final score page",
-        "Only practise topics you already know",
-        "Turn off explanations to save time",
+    q(
+      `You struggled with ${topic}. What is the most useful next step?`,
+      [
+        "Review the idea, restate it, then try a similar question",
+        "Skip the explanation and move to the final score",
+        "Practise only topics that already feel easy",
+        "Turn off feedback to make the session faster",
       ],
-      correctIndex: 0,
+      0,
       topic,
-      difficulty: "medium",
-      explanation: "Weak-spot drilling works best when the learner repairs the misunderstanding first, then immediately tests the repaired understanding.",
-      sourceHint,
-    },
-    {
-      question: `A learner keeps missing questions on ${topic}. Which pattern should Cognify use to target them better?`,
-      options: [
-        "Wrong answers and low-confidence answers from earlier phases",
-        "Only the file name",
-        "Only the total score at the end",
+      "medium",
+      "Weak-spot drilling works best when the learner repairs the misunderstanding and immediately tests it again.",
+      sourceHint
+    ),
+    q(
+      `Which data should Cognify use to target ${topic} more accurately?`,
+      [
+        "Only the document title",
+        "Wrong answers and low-confidence answers",
         "The number of browser tabs open",
+        "Only the final percentage score",
       ],
-      correctIndex: 0,
+      1,
       topic,
-      difficulty: "medium",
-      explanation: "Adaptive learning needs evidence. Wrong answers and low-confidence answers are better signals than a single overall score.",
-      sourceHint,
-    },
-    {
-      question: `Which explanation style is most helpful for correcting a misunderstanding in ${topic}?`,
-      options: [
-        "A short reason why the correct answer is right and why the chosen answer was weaker",
-        "A vague statement saying the answer is obvious",
-        "A long unrelated paragraph",
-        "No feedback until next week",
+      "medium",
+      "Wrong answers and low-confidence answers give better evidence of weak areas than a single final score.",
+      sourceHint
+    ),
+    q(
+      `Which feedback style is most helpful after a mistake in ${topic}?`,
+      [
+        "A vague message saying the answer was obvious",
+        "A long paragraph unrelated to the question",
+        "A clear reason linked to the learner’s mistake",
+        "No feedback until the full session is finished",
       ],
-      correctIndex: 0,
+      2,
       topic,
-      difficulty: "medium",
-      explanation: "Targeted feedback should be clear, brief, and connected to the mistake. That helps the learner adjust quickly.",
-      sourceHint,
-    },
-    {
-      question: `In a weak-spot drill for ${topic}, why should questions be slightly more probing than Phase 1?`,
-      options: [
-        "Because the goal is to reveal and fix the exact misconception, not just check basic recall",
-        "Because every second phase question must be impossible",
-        "Because easier questions should never be used",
-        "Because the learner should not receive explanations",
+      "medium",
+      "Good feedback should explain why the correct answer works and how the learner’s mistake happened.",
+      sourceHint
+    ),
+    q(
+      `Why should Phase 2 questions on ${topic} be more targeted than Phase 1?`,
+      [
+        "Because the app should avoid easier questions",
+        "Because every drill question must be impossible",
+        "Because explanations should be hidden",
+        "Because the goal is to fix a specific gap",
       ],
-      correctIndex: 0,
+      3,
       topic,
-      difficulty: "hard",
-      explanation: "Phase 2 should be diagnostic. It needs enough depth to expose the learner's confusion while still being fair and teachable.",
-      sourceHint,
-    },
-    {
-      question: `What should happen if the learner answers a ${topic} drill question correctly but selects “Guessing”?`,
-      options: [
-        "Keep the topic under review because the answer may not represent secure understanding",
-        "Remove the topic from all future practice immediately",
-        "Count the answer as wrong automatically",
-        "Ignore confidence ratings completely",
+      "hard",
+      "Phase 2 is diagnostic. It should focus on the exact misunderstanding shown in earlier answers.",
+      sourceHint
+    ),
+    q(
+      `If a learner answers a ${topic} question correctly but selects “Guessing”, what should happen?`,
+      [
+        "Keep the topic under review",
+        "Remove the topic from all practice",
+        "Count the answer as fully mastered",
+        "Ignore the confidence rating completely",
       ],
-      correctIndex: 0,
+      0,
       topic,
-      difficulty: "medium",
-      explanation: "Low confidence can reveal unstable knowledge. A learner may guess correctly, so the topic should still be monitored.",
-      sourceHint,
-    },
+      "medium",
+      "Low confidence means the knowledge may not be secure, even when the selected answer is correct.",
+      sourceHint
+    ),
   ];
 
   const phase3: QuizQuestion[] = [
-    {
-      question: `A final challenge question combines ${topic} with another concept. What makes this harder than Phase 1?`,
-      options: [
-        "The learner must connect ideas and apply them, not just recall one isolated fact",
-        "The answer is always hidden outside the material",
-        "The question avoids the learner's weak spots",
-        "The options are chosen randomly",
+    q(
+      `What makes a Final Challenge question on ${topic} harder than a basic scan question?`,
+      [
+        "It avoids all weak topics",
+        "It combines ideas and requires application",
+        "It only checks word recognition",
+        "It removes explanations completely",
       ],
-      correctIndex: 0,
+      1,
       topic,
-      difficulty: "hard",
-      explanation: "Final challenge questions should test synthesis. They require the learner to combine ideas and apply knowledge in a more exam-like way.",
-      sourceHint,
-    },
-    {
-      question: `Which performance result would show strong mastery of ${topic} by the end of the session?`,
-      options: [
-        "Correct answers in the final challenge plus confident explanations of the reasoning",
-        "Only a correct answer in the first easy question",
-        "Skipping the topic after one mistake",
-        "Choosing the same option letter every time",
+      "hard",
+      "Final Challenge questions should test whether the learner can connect and apply ideas, not only recall isolated facts.",
+      sourceHint
+    ),
+    q(
+      `Which result best shows mastery of ${topic} by the end of the session?`,
+      [
+        "Getting one easy question right",
+        "Skipping the topic after a mistake",
+        "Answering hard questions with confidence",
+        "Choosing the same option each time",
       ],
-      correctIndex: 0,
+      2,
       topic,
-      difficulty: "hard",
-      explanation: "Mastery is shown through correct performance on harder questions and confidence that is supported by understanding.",
-      sourceHint,
-    },
-    {
-      question: `If the final challenge exposes a remaining weakness in ${topic}, what should the app recommend?`,
-      options: [
-        "Add the topic to the review list and create a focused follow-up session",
+      "hard",
+      "Mastery is shown when the learner can answer harder questions confidently and explain their reasoning.",
+      sourceHint
+    ),
+    q(
+      `If the Final Challenge still exposes weakness in ${topic}, what should Cognify recommend?`,
+      [
         "Hide the mistake from the results page",
         "Delete the whole session history",
-        "Assume the material is not useful",
+        "Assume the study material is useless",
+        "Add the topic to a focused review list",
       ],
-      correctIndex: 0,
+      3,
       topic,
-      difficulty: "hard",
-      explanation: "A final weakness should become a revision target. The results page should guide the learner toward focused follow-up practice.",
-      sourceHint,
-    },
-    {
-      question: `Why should Cognify show topic breakdown after testing ${topic}?`,
-      options: [
-        "It tells the learner exactly where to revise instead of only showing a broad total score",
-        "It makes the score look more complicated without helping",
-        "It replaces explanations completely",
+      "hard",
+      "Remaining weaknesses should become review targets so the learner knows exactly what to practise next.",
+      sourceHint
+    ),
+    q(
+      `Why is a topic breakdown useful after testing ${topic}?`,
+      [
+        "It shows exactly where revision is needed",
+        "It replaces explanations for wrong answers",
+        "It makes the score harder to understand",
         "It prevents the learner from reviewing mistakes",
       ],
-      correctIndex: 0,
+      0,
       topic,
-      difficulty: "hard",
-      explanation: "Topic-level feedback is more actionable than a total score. It helps learners focus their time on the right areas.",
-      sourceHint,
-    },
-    {
-      question: `A learner gets ${topic} correct in Phase 1 but wrong in Phase 3. What is the best interpretation?`,
-      options: [
-        "They may understand the basics but struggle when the idea is applied or combined with other concepts",
-        "They have fully mastered the topic with no need to review",
+      "hard",
+      "Topic breakdown is more useful than a total score alone because it shows where to focus revision time.",
+      sourceHint
+    ),
+    q(
+      `A learner gets ${topic} right in Phase 1 but wrong in Phase 3. What does that suggest?`,
+      [
+        "They have fully mastered the topic",
+        "They may know basics but struggle applying it",
         "The final challenge should be removed",
-        "Confidence ratings are useless",
+        "Confidence ratings should not be used",
       ],
-      correctIndex: 0,
+      1,
       topic,
-      difficulty: "hard",
-      explanation: "This pattern suggests surface-level knowledge. The learner can recall the basics but may need more applied practice.",
-      sourceHint,
-    },
+      "hard",
+      "This pattern suggests the learner understands the basics but struggles when the concept is applied or combined with others.",
+      sourceHint
+    ),
   ];
 
- const bank = input.phase === 1 ? phase1 : input.phase === 2 ? phase2 : phase3;
-  const question = bank[idx % bank.length];
-
-  // Spread demo answers across A, B, C, and D instead of always A.
-  const targetIndex = (idx + input.phase) % question.options.length;
-
-  return spreadCorrectOption(question, targetIndex);
+  const bank = input.phase === 1 ? phase1 : input.phase === 2 ? phase2 : phase3;
+  return bank[idx % bank.length];
 }
 
 export function generateDemoQuestions(input: MockInput): QuizPayload {
   const topics = topicSet(input);
-  const questions = Array.from({ length: 5 }, (_, idx) => makeQuestion(input, idx, topics[idx % topics.length]));
+  const questions = Array.from({ length: 5 }, (_, idx) =>
+    makeQuestion(input, idx, topics[idx % topics.length])
+  );
+
   return { questions };
 }
