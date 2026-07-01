@@ -37,6 +37,29 @@ function fileLabel(fileName: string) {
   return name.length > 48 ? `${name.slice(0, 48)}…` : name;
 }
 
+function spreadCorrectOption(question: QuizQuestion, targetIndex: number): QuizQuestion {
+  const correctOption = question.options[question.correctIndex];
+  const wrongOptions = question.options.filter((_, index) => index !== question.correctIndex);
+
+  const options: string[] = [];
+  let wrongIndex = 0;
+
+  for (let i = 0; i < question.options.length; i++) {
+    if (i === targetIndex) {
+      options[i] = correctOption;
+    } else {
+      options[i] = wrongOptions[wrongIndex];
+      wrongIndex++;
+    }
+  }
+
+  return {
+    ...question,
+    options,
+    correctIndex: targetIndex,
+  };
+}
+
 function makeQuestion(input: MockInput, idx: number, topic: string): QuizQuestion {
   const material = fileLabel(input.file.name);
   const sourceHint = `Development mode sample from ${material}; real page/section citations will be added when API mode is enabled.`;
@@ -260,8 +283,13 @@ function makeQuestion(input: MockInput, idx: number, topic: string): QuizQuestio
     },
   ];
 
-  const bank = input.phase === 1 ? phase1 : input.phase === 2 ? phase2 : phase3;
-  return bank[idx % bank.length];
+ const bank = input.phase === 1 ? phase1 : input.phase === 2 ? phase2 : phase3;
+  const question = bank[idx % bank.length];
+
+  // Spread demo answers across A, B, C, and D instead of always A.
+  const targetIndex = (idx + input.phase) % question.options.length;
+
+  return spreadCorrectOption(question, targetIndex);
 }
 
 export function generateDemoQuestions(input: MockInput): QuizPayload {
