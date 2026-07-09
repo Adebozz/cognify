@@ -15,12 +15,14 @@
     "lucide-react": "latest",
     "next": "latest",
     "openai": "latest",
+    "pdf-parse": "^1.1.1",
     "react": "latest",
     "react-dom": "latest",
     "zod": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "eslint": "latest",

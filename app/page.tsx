@@ -195,12 +195,23 @@ export default function Home() {
       body: formData,
     });
 
-    const data = await res.json();
+    const rawText = await res.text();
+
+    let data: any;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      console.error("Non-JSON API response:", rawText);
+      throw new Error(
+        "The question generator crashed on the server. Check your terminal for the real error."
+      );
+    }
+
     if (!res.ok) {
       throw new Error(data.error || "Could not generate questions.");
     }
 
-    setPhaseQs((prev) => ({ ...prev, [nextPhase]: data.questions }));
+    setPhaseQs((prev) => ({ ...prev, [nextPhase]: data.questions }));    
     setPhaseIdx(nextPhase);
     setPhaseCurrent(0);
     setPhase("quiz");
