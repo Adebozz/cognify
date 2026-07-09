@@ -59,6 +59,29 @@ function q(
   };
 }
 
+function shuffleQuestionOptions(question: QuizQuestion): QuizQuestion {
+  const optionsWithAnswer = question.options.map((option, index) => ({
+    option,
+    isCorrect: index === question.correctIndex,
+  }));
+
+  for (let i = optionsWithAnswer.length - 1; i > 0; i--) {
+    const randomIndex = Math.floor(Math.random() * (i + 1));
+    [optionsWithAnswer[i], optionsWithAnswer[randomIndex]] = [
+      optionsWithAnswer[randomIndex],
+      optionsWithAnswer[i],
+    ];
+  }
+
+  const newCorrectIndex = optionsWithAnswer.findIndex((item) => item.isCorrect);
+
+  return {
+    ...question,
+    options: optionsWithAnswer.map((item) => item.option),
+    correctIndex: newCorrectIndex,
+  };
+}
+
 function makeQuestion(input: MockInput, idx: number, topic: string): QuizQuestion {
   const material = fileLabel(input.file.name);
   const sourceHint = `Development mode sample from ${material}; real page/section citations will be added when API mode is enabled.`;
@@ -288,9 +311,11 @@ function makeQuestion(input: MockInput, idx: number, topic: string): QuizQuestio
 
 export function generateDemoQuestions(input: MockInput): QuizPayload {
   const topics = topicSet(input);
-  const questions = Array.from({ length: 5 }, (_, idx) =>
-    makeQuestion(input, idx, topics[idx % topics.length])
-  );
+
+  const questions = Array.from({ length: 5 }, (_, idx) => {
+    const question = makeQuestion(input, idx, topics[idx % topics.length]);
+    return shuffleQuestionOptions(question);
+  });
 
   return { questions };
 }
