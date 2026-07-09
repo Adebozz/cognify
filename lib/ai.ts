@@ -212,7 +212,7 @@ export async function generateQuestionsFromText(
       const message = await client.messages.create({
         model: HAIKU_MODEL,
         max_tokens: 3000,
-        temperature: attempt === 0 ? 0.4 : 0.7,
+        temperature: attempt === 0 ? 0.8 : 1.0, // high temp → different quizzes per run
         system,
         messages: [{ role: "user", content: user }],
       });
@@ -239,7 +239,7 @@ export async function generateQuestionsFromText(
         continue; // retry once with higher temperature
       }
 
-      return check.payload;
+      return shuffleOptions(check.payload);
     } catch (err) {
       if (err instanceof InsufficientContentError) throw err;
       lastError = err instanceof Error ? err : new Error(String(err));
@@ -247,4 +247,25 @@ export async function generateQuestionsFromText(
   }
 
   throw lastError ?? new Error("LLM generation failed.");
+}
+
+/**
+ * LLMs habitually place the correct answer first ("all answers are A").
+ * Shuffle each question's options and recompute correctIndex.
+ */
+function shuffleOptions(payload: QuizPayload): QuizPayload {
+  return {
+    questions: payload.questions.map((q) => {
+      const indexed = q.options.map((option, idx) => ({ option, wasCorrect: idx === q.correctIndex }));
+      for (let i = indexed.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indexed[i], indexed[j]] = [indexed[j], indexed[i]];
+      }
+      return {
+        ...q,
+        options: indexed.map((e) => e.option),
+        correctIndex: indexed.findIndex((e) => e.wasCorrect),
+      };
+    }),
+  };
 }

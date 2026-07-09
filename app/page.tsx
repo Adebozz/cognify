@@ -222,6 +222,9 @@ export default function Home() {
       throw new Error(data.error || "Could not generate questions.");
     }
 
+    // Debug: which engine actually produced these questions ("llm" is the goal).
+    console.info("[cognify] generator:", data.meta?.generator, "| documentType:", data.meta?.documentType, data.meta?.llmError ? "| LLM FAILED — check server terminal" : "");
+
     setPhaseQs((prev) => ({ ...prev, [nextPhase]: data.questions }));    
     setPhaseIdx(nextPhase);
     setPhaseCurrent(0);

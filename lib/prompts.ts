@@ -110,6 +110,8 @@ HARD REQUIREMENTS:
 8. "explanation" teaches why the correct answer is right in 1-3 sentences.
 9. "sourceHint" is a short pointer like "section on model evaluation" or "paragraph about kidney function".
 10. Ground everything in the provided text — never invent facts.
+11. WRITE EVERYTHING IN YOUR OWN WORDS. Never copy sentences or phrases verbatim from the material — not in questions, not in options, not in explanations. Rephrase concepts the way a good teacher would.
+12. Vary your angle of attack: mix definition, application, cause-effect, comparison, and "why" questions so repeated runs on the same document produce different quizzes.
 
 IF THE TEXT IS TOO THIN to write 5 good grounded questions, return exactly:
 {"error":"insufficient_content"}
