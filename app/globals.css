@@ -272,6 +272,20 @@ button { -webkit-tap-highlight-color: transparent; }
 }
 .dev-box h3 { font-size: 1rem; font-weight: 900; margin: 8px 0 4px; }
 .dev-box p { color: var(--text2); line-height: 1.55; font-size: .92rem; }
+.mode-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; flex-shrink: 0; }
+.byok-input {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 14px;
+  font-size: .88rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+}
+.byok-input:focus { border-color: var(--violet); }
 .mode-pill {
   display: inline-flex;
   align-items: center;

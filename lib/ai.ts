@@ -1,8 +1,18 @@
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
-import { QuizPayloadSchema, type QuizPayload } from "./schemas";
-import { buildQuestionPrompt, SYSTEM_PROMPT, type PhaseNumber } from "./prompts";
+import {
+  QuizPayloadSchema,
+  validateLlmQuestions,
+  type QuizPayload,
+} from "./schemas";
+import {
+  buildQuestionPrompt,
+  buildTextSystemPrompt,
+  buildTextUserPrompt,
+  SYSTEM_PROMPT,
+  type PhaseNumber,
+} from "./prompts";
 import { generateDemoQuestions } from "./mock";
 
 type GenerateInput = {
@@ -151,4 +161,90 @@ function extractJson(text: string) {
     throw new Error("The AI response did not contain JSON.");
   }
   return cleaned.slice(first, last + 1);
+}
+
+// ---------------------------------------------------------------------------
+// Text-based generation on cheap hosted LLM (Claude Haiku) with BYOK support.
+// Used by the "real mode" path in /api/questions after cleaning/chunking.
+// ---------------------------------------------------------------------------
+
+const HAIKU_MODEL = process.env.ANTHROPIC_MODEL ?? "claude-haiku-4-5-20251001";
+
+export class InsufficientContentError extends Error {
+  constructor() {
+    super("insufficient_content");
+    this.name = "InsufficientContentError";
+  }
+}
+
+export type TextGenerateInput = {
+  text: string;
+  documentType: string;
+  phase: PhaseNumber;
+  weakTopics: string[];
+  previousSummary?: string;
+  /** Optional user-provided key (BYOK). Falls back to server ANTHROPIC_API_KEY. */
+  userApiKey?: string;
+};
+
+/**
+ * Generate 5 validated questions from cleaned text via Claude Haiku.
+ * One retry on parse/validation failure. Throws InsufficientContentError
+ * if the model reports the content is too thin; throws Error otherwise
+ * (caller falls back to the rule engine).
+ */
+export async function generateQuestionsFromText(
+  input: TextGenerateInput
+): Promise<QuizPayload> {
+  const apiKey = input.userApiKey || process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error("No Anthropic API key configured (server or BYOK).");
+  }
+
+  const client = new Anthropic({ apiKey });
+  const system = buildTextSystemPrompt(input.phase);
+  const user = buildTextUserPrompt(input);
+
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const message = await client.messages.create({
+        model: HAIKU_MODEL,
+        max_tokens: 3000,
+        temperature: attempt === 0 ? 0.4 : 0.7,
+        system,
+        messages: [{ role: "user", content: user }],
+      });
+
+      const text = message.content
+        .map((block) => (block.type === "text" ? block.text : ""))
+        .join("\n")
+        .trim();
+
+      const parsed = JSON.parse(extractJson(text)) as unknown;
+
+      if (
+        parsed &&
+        typeof parsed === "object" &&
+        "error" in parsed &&
+        (parsed as { error: unknown }).error === "insufficient_content"
+      ) {
+        throw new InsufficientContentError();
+      }
+
+      const check = validateLlmQuestions(parsed);
+      if (!check.ok) {
+        lastError = new Error(`LLM output failed validation: ${check.reason}`);
+        continue; // retry once with higher temperature
+      }
+
+      return check.payload;
+    } catch (err) {
+      if (err instanceof InsufficientContentError) throw err;
+      lastError = err instanceof Error ? err : new Error(String(err));
+    }
+  }
+
+  throw lastError ?? new Error("LLM generation failed.");
 }

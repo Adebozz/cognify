@@ -79,6 +79,20 @@ const badTopicWords = new Set([
   "also",
   "overall",
   "main",
+  "using",
+  "creates",
+    "defined",
+    "claiming",
+    "patient",
+    "patients",
+    "queries",
+    "often",
+    "follow",
+    "selected",
+    "primary",
+    "model",
+    "keyword",
+    "based",
 ]);
 
 const knownHeadings = new Set([

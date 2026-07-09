@@ -96,39 +96,41 @@ When demo mode is enabled, the app uses the built-in mock question engine instea
 
 ## Environment Variables
 
-| Variable                | Description                                           |
-| ----------------------- | ----------------------------------------------------- |
-| `DEMO_MODE`             | Enables or disables backend demo mode                 |
-| `NEXT_PUBLIC_DEMO_MODE` | Enables or disables frontend demo indicators          |
-| `AI_PROVIDER`           | Future AI provider option: `openai` or `anthropic`    |
-| `OPENAI_API_KEY`        | OpenAI API key for future real question generation    |
-| `OPENAI_MODEL`          | OpenAI model name                                     |
-| `ANTHROPIC_API_KEY`     | Anthropic API key for future real question generation |
-| `ANTHROPIC_MODEL`       | Anthropic model name                                  |
+| Variable                   | Description                                                        |
+| -------------------------- | ------------------------------------------------------------------ |
+| `ANTHROPIC_API_KEY`        | Server key for Real AI mode (Claude Haiku question generation)     |
+| `ANTHROPIC_MODEL`          | Optional model override (default `claude-haiku-4-5-20251001`)      |
+| `UPSTASH_REDIS_REST_URL`   | Upstash Redis REST URL — enables persistent rate limiting in prod  |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token                                           |
+| `RATE_LIMIT_PER_DAY`       | Optional: real-AI calls per IP per day (default 6 = 2 sessions)    |
+| `OPENAI_API_KEY` / `OPENAI_MODEL` / `AI_PROVIDER` | Legacy file-based pipeline in `lib/ai.ts` (unused by the main route) |
 
-## Future API Mode
+Set these locally in `.env.local` and in the Vercel project settings for production.
+Without Upstash vars, rate limiting falls back to in-memory (fine for local dev only).
 
-When the app is ready for real AI-generated questions, demo mode can be disabled:
+## Real AI Mode
 
-```env
-DEMO_MODE=false
-NEXT_PUBLIC_DEMO_MODE=false
+Demo mode (free, unlimited, rule-based questions) is the default. Users switch to
+**Real AI mode** with the toggle on the upload screen — no env change or redeploy needed.
 
-AI_PROVIDER=openai
-OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_MODEL=your_openai_model_here
-```
+Real AI mode flow in `/api/questions`:
 
-Or for Anthropic:
+1. Rate limit on the server key: 6 calls/day per IP (skipped for BYOK requests)
+2. Clean + chunk extracted text (`lib/chunking.ts`) — strips references, DOIs,
+   figure captions, page numbers; detects document type; selects best ~24k chars
+3. Claude Haiku generates exactly 5 questions (`lib/ai.ts`, prompt in `lib/prompts.ts`)
+4. Output validated (`lib/schemas.ts`): shape, vague-topic blocklist,
+   option-length giveaway check, citation-question guard — one retry on failure
+5. If the LLM fails → automatic fallback to the rule engine
+   (`meta.generator: "rule-engine-fallback"`)
+6. If content is too thin → friendly `422` with `code: "insufficient_content"`
 
-```env
-DEMO_MODE=false
-NEXT_PUBLIC_DEMO_MODE=false
+**BYOK:** users can paste their own Anthropic API key on the upload screen. It is
+sent as the `x-user-api-key` header, held in React state only (never stored), and
+bypasses the daily rate limit.
 
-AI_PROVIDER=anthropic
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-ANTHROPIC_MODEL=your_anthropic_model_here
-```
+Check `meta.generator` (`llm` / `rule-engine` / `rule-engine-fallback`) and
+`meta.documentType` in the API response to verify routing.
 
 After changing `.env.local`, restart the development server.
 
@@ -143,10 +145,13 @@ app/
       route.ts              Backend route for demo/API question generation
 
 lib/
-  ai.ts                     OpenAI/Claude integration layer
+  ai.ts                     Claude Haiku text pipeline + legacy file-based layer
+  chunking.ts               Text cleaning, doc-type detection, best-content selection
+  rateLimit.ts              6/day/IP limit (Upstash REST in prod, in-memory dev)
   mock.ts                   Built-in development question engine
-  prompts.ts                Prompt templates for future AI mode
-  schemas.ts                Question validation schema
+  prompts.ts                Prompt templates (LLM system/user prompts per phase)
+  schemas.ts                Zod validation + LLM output quality guards
+  studyQuestionEngine.ts    Rule/template question engine (demo mode + fallback)
 ```
 
 ## Available Scripts
