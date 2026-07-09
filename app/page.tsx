@@ -5,6 +5,12 @@ import { Brain, Check, Flame, RotateCcw, Target, Timer, UploadCloud, X } from "l
 import clsx from "clsx";
 import type { QuizQuestion } from "@/lib/schemas";
 
+import {
+  analyseTopicMastery,
+  buildAdaptivePlan,
+  getWeakTopics,
+} from "@/lib/adaptiveEngine";
+
 type PhaseNumber = 1 | 2 | 3;
 type AppPhase = "upload" | "loading" | "quiz" | "results";
 type Confidence = 1 | 2 | 3 | null;
@@ -270,10 +276,10 @@ export default function Home() {
     }
 
     const phaseAnswers = answers.filter((a) => a.phase === phaseIdx);
-    const newWeaks = phaseAnswers
-      .filter((a) => a.chosenIdx !== a.correctIdx || a.conf === 1)
-      .map((a) => a.topic)
-      .filter(Boolean);
+    const newWeaks = getWeakTopics(
+      answers.filter((answer) => answer.phase === phaseIdx),
+      5
+    );
 
     const mergedWeakTopics = [...new Set([...weakTopics, ...newWeaks])];
     setWeakTopics(mergedWeakTopics);
