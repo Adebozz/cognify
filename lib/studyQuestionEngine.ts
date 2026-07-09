@@ -45,6 +45,38 @@ const reportHeadings = [
   "methodology",
 ];
 
+const badTopicWords = new Set([
+  "this",
+  "these",
+  "those",
+  "there",
+  "their",
+  "because",
+  "however",
+  "therefore",
+  "important",
+  "project",
+  "system",
+  "include",
+  "includes",
+  "showed",
+  "results",
+  "background",
+  "chapter",
+  "section",
+  "scope",
+  "the",
+  "a",
+  "an",
+  "it",
+  "its",
+  "they",
+  "them",
+  "also",
+  "overall",
+  "main",
+]);
+
 function cleanText(text: string) {
   return text
     .replace(/\r/g, "\n")
@@ -185,6 +217,32 @@ function cleanTopic(value: string) {
       .trim()
       .slice(0, 45)
   ) || "Core Concept";
+}
+
+function isBadTopic(topic: string) {
+  const cleaned = topic.toLowerCase().trim();
+
+  if (!cleaned) return true;
+  if (cleaned.length < 4) return true;
+
+  const badExact = new Set([
+    "this",
+    "there",
+    "these",
+    "those",
+    "the scope",
+    "the aim",
+    "core concept",
+    "general",
+    "overview",
+  ]);
+
+  if (badExact.has(cleaned)) return true;
+
+  const firstWord = cleaned.split(" ")[0];
+  if (badTopicWords.has(firstWord)) return true;
+
+  return false;
 }
 
 function pickSentence(section: Section, matchers: RegExp[]) {
@@ -378,7 +436,7 @@ function conceptCandidates(sections: Section[], fileName: string): Candidate[] {
       const topic = cleanTopic(rawTopic);
       const answer = short(def[3], 145);
 
-      if (topic.length < 4 || answer.length < 25) continue;
+      if (isBadTopic(topic) || answer.length < 25) continue;;
 
       candidates.push({
         topic,
@@ -419,7 +477,9 @@ function generalCandidates(sections: Section[], fileName: string): Candidate[] {
 }
 
 function selectForPhase(candidates: Candidate[], phase: PhaseNumber, weakTopics: string[]) {
-  let pool = candidates;
+    candidates = candidates.filter((candidate) => !isBadTopic(candidate.topic));
+  
+    let pool = candidates;
 
   if (phase === 2 && weakTopics.length) {
     const weak = weakTopics.map((w) => w.toLowerCase());
@@ -533,9 +593,27 @@ export function generateQuestionsFromStudyText(input: GenerateInput): QuizPayloa
   }
 
   const selected = selectForPhase(candidates, input.phase, input.weakTopics);
-  const questions = selected.map((candidate) =>
-    buildQuestion(candidate, candidates, input.phase)
-  );
+  const questions = selected
+    .filter((candidate) => !isBadTopic(candidate.topic))
+    .map((candidate) => buildQuestion(candidate, candidates, input.phase))
+    .filter((question) => {
+        const q = question.question.toLowerCase();
 
+        if (q.includes("what best describes this")) return false;
+        if (q.includes("what best describes there")) return false;
+        if (q.includes("weak spot drill: what best describes this")) return false;
+        if (question.options.some((opt) => opt.length < 12)) return false;
+
+        return true;
+    })
+    .slice(0, 5);
+    if (questions.length < 5) {
+    const backup = selected
+        .map((candidate) => buildQuestion(candidate, candidates, input.phase))
+        .filter((question) => !isBadTopic(question.topic))
+        .slice(0, 5);
+
+    return { questions: backup };
+    }
   return { questions };
 }
