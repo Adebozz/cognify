@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { createRequire } from "module";
 import mammoth from "mammoth";
-import { generateDemoQuestions } from "@/lib/mock";
 import { generateQuestionsFromStudyText } from "@/lib/studyQuestionEngine";
-
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -106,30 +104,25 @@ export async function POST(req: Request) {
       );
     }
 
+    const textForGeneration = extractedText.slice(0, 150000);
+
     const payload = generateQuestionsFromStudyText({
-      text: extractedText.slice(0, 150000),
+      text: extractedText.slice(0, 180000),
       fileName: file.name,
       phase,
       weakTopics,
     });
 
-    if (!payload.questions.length) {
-      const demoPayload = generateDemoQuestions({
-        file,
-        phase,
-        weakTopics,
-        previousSummary: "",
-      });
-
-      return NextResponse.json({
-        ...demoPayload,
-        meta: {
-          ...meta,
-          engine: "fallback-demo-engine",
-          warning: "The document was readable, but not enough good study questions could be generated.",
+    if (payload.questions.length < 5) {
+      return NextResponse.json(
+        {
+          error:
+            "Cognify could read this file, but it could not confidently generate enough good questions from it. Try a clearer study document, lecture notes, textbook chapter, or report with readable sections.",
         },
-      });
+        { status: 422 }
+      );
     }
+
 
     return NextResponse.json({
       ...payload,
