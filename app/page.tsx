@@ -168,7 +168,10 @@ export default function Home() {
     const picked = files?.[0];
     if (!picked) return;
 
-    const ok = picked.type === "application/pdf" || picked.type.startsWith("image/");
+    const ok =
+      picked.type === "application/pdf" ||
+      picked.type.startsWith("image/") ||
+      picked.name.toLowerCase().endsWith(".docx");
     if (!ok) {
       setError("Please upload a PDF or image file.");
       return;
@@ -426,11 +429,21 @@ export default function Home() {
             onDragLeave={() => setDrag(false)}
             onDrop={(e) => { e.preventDefault(); setDrag(false); handleFileList(e.dataTransfer.files); }}
           >
-            <input type="file" accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp" onChange={(e) => handleFileList(e.target.files)} />
+            <input
+              type="file"
+              accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              onChange={(e) => handleFileList(e.target.files)}
+            />
             <UploadCloud className="drop-icon" />
             <h3>Drop your study material here</h3>
-            <p>Click to browse — PDF or image</p>
-            <div className="formats"><span className="fmt">PDF</span><span className="fmt">PNG</span><span className="fmt">JPG</span><span className="fmt">WEBP</span></div>
+            <p>Click to browse — PDF, DOCX, or image</p>
+            <div className="formats">
+              <span className="fmt">PDF</span>
+              <span className="fmt">DOCX</span>
+              <span className="fmt">PNG</span>
+              <span className="fmt">JPG</span>
+              <span className="fmt">WEBP</span>
+            </div>
           </label>
         )}
 

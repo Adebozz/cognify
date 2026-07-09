@@ -13,6 +13,7 @@
     "@anthropic-ai/sdk": "latest",
     "clsx": "latest",
     "lucide-react": "latest",
+    "mammoth": "^1.12.0",
     "next": "latest",
     "openai": "latest",
     "pdf-parse": "^1.1.1",
