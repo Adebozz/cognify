@@ -291,3 +291,82 @@ button { -webkit-tap-highlight-color: transparent; }
   .dev-box { align-items: stretch; flex-direction: column; }
   .dev-box .btn { width: 100%; }
 }
+
+.adaptive-card {
+  margin-top: 18px;
+}
+
+.adaptive-summary {
+  color: var(--text2);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 8px 0 14px;
+}
+
+.mastery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mastery-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 14px;
+  border-radius: 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+}
+
+.mastery-item.weak {
+  border-color: var(--rose);
+  background: var(--rose-dim);
+}
+
+.mastery-item.developing {
+  border-color: var(--amber);
+  background: var(--amber-dim);
+}
+
+.mastery-item.strong {
+  border-color: var(--emerald);
+  background: var(--emerald-dim);
+}
+
+.mastery-topic {
+  font-weight: 800;
+  font-size: 0.92rem;
+}
+
+.mastery-meta {
+  color: var(--text2);
+  font-size: 0.78rem;
+  margin-top: 3px;
+}
+
+.mastery-reco {
+  color: var(--text2);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin-top: 6px;
+}
+
+.mastery-score {
+  text-align: right;
+  font-family: var(--mono);
+  min-width: 68px;
+}
+
+.mastery-score span {
+  display: block;
+  font-weight: 900;
+  font-size: 1rem;
+}
+
+.mastery-score small {
+  color: var(--text2);
+  text-transform: capitalize;
+  font-size: 0.7rem;
+}

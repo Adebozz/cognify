@@ -275,7 +275,7 @@ export default function Home() {
       return;
     }
 
-    const phaseAnswers = answers.filter((a) => a.phase === phaseIdx);
+    
     const newWeaks = getWeakTopics(
       answers.filter((answer) => answer.phase === phaseIdx),
       5
@@ -558,8 +558,9 @@ export default function Home() {
     const p1 = phaseScore(1);
     const p2 = phaseScore(2);
     const p3 = phaseScore(3);
-    const topics = topicBreakdown();
-    const weak = [...new Set(answers.filter((a) => a.chosenIdx !== a.correctIdx || a.conf === 1).map((a) => a.topic))];
+    const topicMastery = analyseTopicMastery(answers);
+    const adaptivePlan = buildAdaptivePlan(answers);
+    const weak = adaptivePlan.weakTopics;
     const wrong = answers.filter((a) => a.chosenIdx !== a.correctIdx).slice(0, 7);
 
     return (
@@ -575,14 +576,26 @@ export default function Home() {
           <ScoreCard label="🔥 Challenge" value={p3} />
         </div>
 
-        <section className="panel">
-          <div className="section-hd"><Brain size={18} /> Topic breakdown</div>
-          <div className="sp-bars">
-            {topics.map((t) => (
-              <div className="sp-row" key={t.topic}>
-                <div className="sp-label">{t.topic}</div>
-                <div className="sp-track"><div className="sp-bar" style={{ width: `${t.pct}%`, background: historyColor(t.pct) }} /></div>
-                <div className="sp-pct" style={{ color: historyColor(t.pct) }}>{t.pct}%</div>
+       <section className="panel adaptive-card">
+          <div className="section-hd"><Brain size={18} /> Cognify Adaptive Analysis</div>
+
+          <p className="adaptive-summary">{adaptivePlan.recommendation}</p>
+
+          <div className="mastery-list">
+            {topicMastery.map((item) => (
+              <div key={item.topic} className={`mastery-item ${item.level}`}>
+                <div>
+                  <div className="mastery-topic">{item.topic}</div>
+                  <div className="mastery-meta">
+                    {item.correct}/{item.attempts} correct · {item.averageConfidence}% confidence · next: {item.nextDifficulty}
+                  </div>
+                  <div className="mastery-reco">{item.recommendation}</div>
+                </div>
+
+                <div className="mastery-score">
+                  <span>{item.score}%</span>
+                  <small>{item.level}</small>
+                </div>
               </div>
             ))}
           </div>
