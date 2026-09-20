@@ -30,6 +30,12 @@ type Answer = {
   conf: Confidence;
 };
 
+type QuestionsApiResponse = {
+  questions?: QuizQuestion[];
+  error?: string;
+  meta?: { generator?: string; documentType?: string; llmError?: boolean };
+};
+
 type HistoryItem = {
   fileName: string;
   pct: number;
@@ -94,6 +100,9 @@ export default function Home() {
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem("cognify-history");
+      // Hydrate from localStorage after mount; reading it during render would
+      // cause a server/client hydration mismatch.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (saved) setHistory(JSON.parse(saved));
     } catch {
       setHistory([]);
@@ -208,7 +217,7 @@ export default function Home() {
 
     const rawText = await res.text();
 
-    let data: any;
+    let data: QuestionsApiResponse;
     try {
       data = JSON.parse(rawText);
     } catch {
@@ -225,7 +234,7 @@ export default function Home() {
     // Debug: which engine actually produced these questions ("llm" is the goal).
     console.info("[cognify] generator:", data.meta?.generator, "| documentType:", data.meta?.documentType, data.meta?.llmError ? "| LLM FAILED — check server terminal" : "");
 
-    setPhaseQs((prev) => ({ ...prev, [nextPhase]: data.questions }));    
+    setPhaseQs((prev) => ({ ...prev, [nextPhase]: data.questions ?? [] }));
     setPhaseIdx(nextPhase);
     setPhaseCurrent(0);
     setPhase("quiz");
@@ -252,10 +261,16 @@ export default function Home() {
   }
 
   async function startDemoSession() {
-    const demoFile = new File(["Cognify development mode sample"], "cognify-demo-notes.pdf", { type: "application/pdf" });
-    setFile(demoFile);
     resetQuizState(false);
     try {
+      // Use a real sample document: the server parses uploads, so a fake PDF
+      // placeholder fails with "Invalid PDF structure".
+      const res = await fetch("/sample-notes.docx");
+      if (!res.ok) throw new Error("Could not load the sample notes.");
+      const demoFile = new File([await res.blob()], "sample-notes.docx", {
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+      setFile(demoFile);
       await generatePhase(1, [], demoFile);
     } catch (err) {
       setPhase("upload");
