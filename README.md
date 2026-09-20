@@ -1,5 +1,7 @@
 # Cognify
 
+[![CI](https://github.com/Adebozz/cognify/actions/workflows/ci.yml/badge.svg)](https://github.com/Adebozz/cognify/actions/workflows/ci.yml)
+
 Cognify is an adaptive exam-prep web app built with **Next.js**. It helps students turn study materials into personalised revision sessions using a 3-phase quiz flow: baseline knowledge scan, weak-spot practice, and final challenge questions.
 
 The current version runs in **demo/development mode**, so the full app experience can be tested without using paid AI API credits.
@@ -156,29 +158,42 @@ lib/
 
 ## Available Scripts
 
-```bash
-npm run dev
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start the local dev server |
+| `npm run build` / `npm run start` | Production build / serve it |
+| `npm run lint` | ESLint (Next.js core-web-vitals + TypeScript rules) |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm test` | Unit + API integration tests (Vitest) |
+| `npm run test:coverage` | Same, with a V8 coverage report in `coverage/` |
+| `npm run test:e2e` | Playwright end-to-end + accessibility tests (desktop & mobile) |
+| `npm run test:all` | Everything CI runs, in order |
+
+## Testing & CI
+
+Every push and pull request runs a GitHub Actions pipeline with quality gates:
+
+```
+lint → typecheck → unit + API tests (coverage) → production build → Playwright E2E + axe accessibility
 ```
 
-Starts the local development server.
+**Unit tests** (`tests/unit`): LLM output validation (vague topics, citation questions, giveaway answers, duplicate options), text cleaning and chunking within the 24k-character budget, the adaptive mastery engine, the rate limiter (in-memory and Upstash, including fail-open on Redis outages), and the Claude client (retry with higher temperature, JSON extraction, BYOK key precedence, answer shuffling that keeps `correctIndex` correct). The Anthropic SDK is mocked, so tests never use API credits.
+
+**API integration tests** (`tests/api`): `POST /api/questions` end to end, covering 400/422/429/500 paths, BYOK bypassing the rate limit, and automatic fallback to the rule engine when the LLM fails.
+
+**End-to-end tests** (`tests/e2e`): a full 15-question, 3-phase session on a real DOCX in desktop and mobile Chrome; results export, history persisting across reloads, timed mode; and failure scenarios (rate limit, server returning HTML, network down, unsupported files). axe-core fails the build on serious or critical WCAG 2.1 AA violations.
+
+Bugs the suite has caught so far:
+- "Try sample session" sent a fake PDF and failed with *Invalid PDF structure*. It now loads a real sample document.
+- Colour contrast on the primary button and format tags was below WCAG AA. Both are fixed.
+- The adaptive engine can report the same topic as both *weak* and *strong*. This is tracked as a known failing test (`it.fails`) in `tests/unit/adaptiveEngine.test.ts`.
+
+To run E2E locally the first time:
 
 ```bash
-npm run build
+npx playwright install chromium
+npm run build && npm run test:e2e
 ```
-
-Builds the app for production.
-
-```bash
-npm run start
-```
-
-Runs the production build locally.
-
-```bash
-npm run lint
-```
-
-Runs linting checks.
 
 ## Roadmap
 
